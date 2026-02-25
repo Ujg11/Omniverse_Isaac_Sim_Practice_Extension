@@ -2,7 +2,7 @@ import omni.ui as ui
 import carb
 import omni.timeline
 from omni.usd import StageEventType
-
+import asyncio
 from . import global_variables as gv
 from .scenario import SyntheticCaptureScenario
 
@@ -85,11 +85,15 @@ class UIBuilder:
 
 		self._status_label.text = "Status: creating scene..."
 		self._scenario.create_scene(cone, sphere, cube, cam, look)
+		asyncio.ensure_future(self._scenario.flush())
 		self._status_label.text = "Status: scene created."
 
 	def _on_start(self):
 		self._status_label.text = "Status: generating..."
-		ok = self._scenario.generate_one_frame()
+		asyncio.ensure_future(self._start_async())
+
+	async def _start_async(self):
+		ok = await self._scenario.generate_one_frame_async()
 		self._status_label.text = "Status: done." if ok else "Status: failed (see Console)."
 
 	def _on_reset(self):
