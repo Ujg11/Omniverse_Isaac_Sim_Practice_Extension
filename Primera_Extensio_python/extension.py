@@ -46,7 +46,6 @@ This class sets up standard useful callback functions in UIBuilder:
 class Extension(omni.ext.IExt):
 	def on_startup(self, ext_id: str):
 		"""Initialize extension and UI elements"""
-		carb.log_info("[Primera_Extensio] on_startup begin")
 
 		self.ext_id = ext_id
 		self._usd_context = omni.usd.get_context()
@@ -72,7 +71,6 @@ class Extension(omni.ext.IExt):
 
 		add_menu_items(self._menu_items, EXTENSION_TITLE)
 
-		# Filled in with User Functions
 		self.ui_builder = UIBuilder()
 
 		# Events
@@ -81,7 +79,7 @@ class Extension(omni.ext.IExt):
 		self._physx_subscription = None
 		self._stage_event_sub = None
 		self._timeline = omni.timeline.get_timeline_interface()
-		carb.log_info("[Primera_Extensio] on_startup end")
+
 
 	def on_shutdown(self):
 		 # Cancel task (dock coroutine) if pending
@@ -97,18 +95,18 @@ class Extension(omni.ext.IExt):
 		self._timeline_event_sub = None
 		self._physx_subscription = None
 
-		# 1) Elimina menú primer
+		# Elimina menú primer
 		try:
 			remove_menu_items(self._menu_items, EXTENSION_TITLE)
 		except Exception:
 			pass
-		# 2) Elimina acció
+		# Elimina acció
 		try:
 			action_registry = omni.kit.actions.core.get_action_registry()
 			action_registry.deregister_action(self.ext_id, f"CreateUIExtension:{EXTENSION_TITLE}")
 		except Exception:
 			pass
-		# 3) Destrueix finestra
+		# Destrueix finestra
 		w = getattr(self, "_window", None)
 		if w is not None:
 			try:
@@ -117,7 +115,7 @@ class Extension(omni.ext.IExt):
 			except Exception:
 				pass
 		self._window = None
-		# 4) Cleanup UI builder
+		# Cleanup UI builder
 		try:
 			self.ui_builder.cleanup()
 		except Exception:
@@ -125,7 +123,6 @@ class Extension(omni.ext.IExt):
 		gc.collect()
 
 	def _on_window(self, visible):
-		# Guard against late callbacks after shutdown/destroy
 		w = getattr(self, "_window", None)
 		if w is None:
 			return
@@ -175,15 +172,11 @@ class Extension(omni.ext.IExt):
 		if w is None:
 			carb.log_warn("[Primera_Extensio] _window is None; ignoring menu action (extension not ready or already shutdown)")
 			return
-
-		# Toggle safely
 		try:
 			w.visible = not bool(w.visible)
 		except Exception as e:
 			carb.log_error(f"[Primera_Extensio] Failed toggling window visibility: {e}")
 			return
-
-		# Callback UI (optional)
 		try:
 			self.ui_builder.on_menu_callback()
 		except Exception as e:
@@ -203,12 +196,10 @@ class Extension(omni.ext.IExt):
 
 	def _on_stage_event(self, event):
 		if event.type == int(StageEventType.OPENED) or event.type == int(StageEventType.CLOSED):
-			# stage was opened or closed, cleanup
 			self._physx_subscription = None
 			self.ui_builder.cleanup()
 
 		self.ui_builder.on_stage_event(event)
 
 	def _build_extension_ui(self):
-		# Call user function for building UI
 		self.ui_builder.build_ui()

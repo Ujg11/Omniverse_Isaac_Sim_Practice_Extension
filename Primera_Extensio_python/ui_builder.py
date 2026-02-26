@@ -18,11 +18,9 @@ class UIBuilder:
 		pass
 
 	def on_timeline_event(self, event):
-		# No fem res especial per ara
 		pass
 
 	def on_physics_step(self, step: float):
-		# No fem res: la nostra extensió no depèn del physics step
 		pass
 
 	def on_stage_event(self, event):
@@ -33,7 +31,6 @@ class UIBuilder:
 				self._status_label.text = "Status: stage opened -> reset."
 
 	def cleanup(self):
-		# Ara no tenim wrapped_ui_elements, així que cleanup és trivial
 		pass
 
 	def build_ui(self):
@@ -63,7 +60,7 @@ class UIBuilder:
 				ui.Button("Create Scene", clicked_fn=self._on_create_scene)
 				ui.Button("Start (Generate 1 frame)", clicked_fn=self._on_start)
 
-			ui.Button("Reset", clicked_fn=self._on_reset)
+			# ui.Button("Reset", clicked_fn=self._on_reset)
 
 			self._status_label = ui.Label("Status: idle")
 
@@ -93,8 +90,12 @@ class UIBuilder:
 		asyncio.ensure_future(self._start_async())
 
 	async def _start_async(self):
-		ok = await self._scenario.generate_one_frame_async()
-		self._status_label.text = "Status: done." if ok else "Status: failed (see Console)."
+		try:
+			ok = await self._scenario.generate_one_frame_async()
+			self._status_label.text = "Status: done." if ok else "Status: failed (see Console)."
+		except Exception as e:
+			carb.log_error(f"[UI] Start failed: {e}")
+			self._status_label.text = "Status: failed (exception; see Console)."
 
 	def _on_reset(self):
 		self._scenario.reset()
